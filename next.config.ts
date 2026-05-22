@@ -9,9 +9,7 @@ const withPWA = require("next-pwa")({
 
 const nextConfig: NextConfig = {
   /* config options here */
-  turbopack: {
-    root: __dirname,
-  },
+  turbopack: {},
 };
 
 export default withPWA(nextConfig);
