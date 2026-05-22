@@ -8,8 +8,8 @@ export function GpsLocator() {
   const map = useMap()
 
   const handleLocate = () => {
-    map.locate().on("locationfound", function (e) {
-      map.flyTo(e.latlng, map.getZoom())
+    map.locate({ setView: false, enableHighAccuracy: true }).on("locationfound", function (e) {
+      map.flyTo(e.latlng, 18)
     })
   }
 
