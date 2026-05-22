@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import { Card } from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
@@ -10,40 +12,23 @@ const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), 
 const Polygon = dynamic(() => import('react-leaflet').then(m => m.Polygon), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
 
-// Mock ward boundaries
-const mockWards = [
-  {
-    id: "ward-1",
-    name: "Ward 42 - North",
-    assignee: "Rahul Sharma",
-    color: "#f97316", // Saffron
-    positions: [
-      [28.6139, 77.2090],
-      [28.6150, 77.2120],
-      [28.6120, 77.2150],
-      [28.6100, 77.2100],
-    ] as [number, number][],
-  },
-  {
-    id: "ward-2",
-    name: "Ward 15 - East",
-    assignee: "Priya Patel",
-    color: "#3b82f6", // Blue
-    positions: [
-      [28.6150, 77.2120],
-      [28.6180, 77.2150],
-      [28.6160, 77.2200],
-      [28.6120, 77.2150],
-    ] as [number, number][],
-  }
-];
-
 export function AreaAssignment() {
+  const [wards, setWards] = useState<any[]>([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchWards = async () => {
+      const { data } = await supabase.from('wards').select('*, users(name)');
+      if (data) setWards(data);
+    };
+    fetchWards();
+  }, [supabase]);
+
   return (
     <Card className="overflow-hidden border-slate-200 dark:border-slate-800 relative z-0 h-[400px]">
       <MapContainer 
         center={[28.6139, 77.2090] as [number, number]} 
-        zoom={15} 
+        zoom={12} 
         style={{ height: '100%', width: '100%', zIndex: 0 }}
       >
         <TileLayer
@@ -51,21 +36,21 @@ export function AreaAssignment() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {mockWards.map(ward => (
+        {wards.map(ward => (
           <Polygon 
             key={ward.id} 
-            positions={ward.positions} 
+            positions={ward.boundary?.positions || []} 
             pathOptions={{ 
-              color: ward.color, 
-              fillColor: ward.color, 
+              color: ward.users ? '#f97316' : '#94a3b8', 
+              fillColor: ward.users ? '#f97316' : '#94a3b8', 
               fillOpacity: 0.4,
               weight: 2
             }}
           >
             <Popup>
               <div className="p-1">
-                <h3 className="font-semibold text-slate-900">{ward.name}</h3>
-                <p className="text-sm text-slate-600 mt-1">Assigned to: {ward.assignee}</p>
+                <h3 className="font-semibold text-slate-900">{ward.name || ward.ward_number}</h3>
+                <p className="text-sm text-slate-600 mt-1">Assigned to: {ward.users?.name || 'Unassigned'}</p>
               </div>
             </Popup>
           </Polygon>
@@ -81,11 +66,7 @@ export function AreaAssignment() {
             <span className="text-slate-600 dark:text-slate-400">Assigned & Active</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-slate-600 dark:text-slate-400">Assigned (Pending)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full border border-slate-400 border-dashed"></div>
+            <div className="w-3 h-3 rounded-full bg-slate-400"></div>
             <span className="text-slate-600 dark:text-slate-400">Unassigned</span>
           </div>
         </div>

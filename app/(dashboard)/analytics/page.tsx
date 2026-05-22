@@ -1,52 +1,65 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { StatsCards } from "@/components/dashboard/stats-cards"
 import { PopulationChart } from "@/components/dashboard/population-chart"
 import { WardChart } from "@/components/dashboard/ward-chart"
 import { DailyProgress } from "@/components/dashboard/daily-progress"
 import { CompletionRing } from "@/components/dashboard/completion-ring"
+import { useHouses } from "@/hooks/use-houses"
+import { HouseCensusFormValues } from "@/utils/validators"
 
 export default function AnalyticsDashboardPage() {
-  // Mock Data (to be replaced with actual backend calls)
-  
-  const statsData = {
-    totalHouses: 1450,
-    totalPopulation: 5800,
-    male: 2950,
-    female: 2850,
-    children: 1200,
-    seniors: 650,
-    completionRate: 72,
-  }
+  const { fetchHouses, loading } = useHouses()
+  const [houses, setHouses] = useState<(HouseCensusFormValues & { id: string, created_at: string })[]>([])
+
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await fetchHouses()
+      if (data) setHouses(data as any)
+    }
+    loadData()
+  }, [fetchHouses])
+
+  // Aggregation Logic for Real Data
+  const totalHouses = houses.length
+  const totalPopulation = houses.reduce((sum, h) => sum + (h.totalPopulation || 0), 0)
+  const male = houses.reduce((sum, h) => sum + (h.male || 0), 0)
+  const female = houses.reduce((sum, h) => sum + (h.female || 0), 0)
+  const children = houses.reduce((sum, h) => sum + (h.children || 0), 0)
+  const seniors = houses.reduce((sum, h) => sum + (h.seniorCitizens || 0), 0)
+
+  const completedSurveys = houses.filter(h => h.surveyStatus === "COMPLETED").length
+  const completionRate = totalHouses > 0 ? Math.round((completedSurveys / totalHouses) * 100) : 0
+
+  const statsData = { totalHouses, totalPopulation, male, female, children, seniors, completionRate }
 
   const populationData = [
-    { category: "Male", count: 2950 },
-    { category: "Female", count: 2850 },
-    { category: "Children", count: 1200 },
-    { category: "Seniors", count: 650 },
+    { category: "Male", count: male },
+    { category: "Female", count: female },
+    { category: "Children", count: children },
+    { category: "Seniors", count: seniors },
   ]
 
-  const wardData = [
-    { name: "Ward 1", surveyed: 400, pending: 120 },
-    { name: "Ward 2", surveyed: 300, pending: 200 },
-    { name: "Ward 3", surveyed: 450, pending: 50 },
-    { name: "Ward 4", surveyed: 300, pending: 180 },
-  ]
-
-  const dailyProgressData = [
-    { date: "Mon", completed: 45 },
-    { date: "Tue", completed: 52 },
-    { date: "Wed", completed: 89 },
-    { date: "Thu", completed: 70 },
-    { date: "Fri", completed: 95 },
-    { date: "Sat", completed: 120 },
-    { date: "Sun", completed: 110 },
-  ]
+  // Group by Status
+  const pending = houses.filter(h => h.surveyStatus === "PENDING").length
+  const inProgress = houses.filter(h => h.surveyStatus === "IN_PROGRESS").length
 
   const completionRingData = [
-    { name: "Surveyed", value: 1450, color: "#10b981" }, // Emerald 500
-    { name: "Pending", value: 450, color: "#f59e0b" },   // Amber 500
-    { name: "Incomplete", value: 80, color: "#3b82f6" }, // Blue 500
-    { name: "Locked", value: 20, color: "#ef4444" },     // Red 500
+    { name: "Completed", value: completedSurveys || 1, color: "#10b981" },
+    { name: "Pending", value: pending, color: "#f59e0b" },
+    { name: "In Progress", value: inProgress, color: "#3b82f6" },
   ]
+
+  // Dummy Ward/Daily data as placeholders until Ward table is fully linked
+  const wardData = [
+    { name: "Ward 1", surveyed: completedSurveys, pending: pending },
+  ]
+  const dailyProgressData = [
+    { date: "Today", completed: completedSurveys },
+  ]
+
+  if (loading) return <div className="p-8 text-center animate-pulse">Loading Analytics...</div>
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6">

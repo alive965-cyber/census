@@ -3,7 +3,6 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { MobileNav } from '@/components/layout/mobile-nav';
-import { ThemeProvider } from 'next-themes';
 import { OfflineProvider } from '@/features/offline/offline-provider';
 
 export default function DashboardLayout({
@@ -12,8 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
+    <AuthProvider>
         <OfflineProvider>
           <AuthGuard>
             <div className="flex h-screen overflow-hidden bg-background">
@@ -31,6 +29,5 @@ export default function DashboardLayout({
           </AuthGuard>
         </OfflineProvider>
       </AuthProvider>
-    </ThemeProvider>
   );
 }

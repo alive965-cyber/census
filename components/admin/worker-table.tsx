@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from "react";
 import { 
   Table, 
   TableBody, 
@@ -11,16 +12,29 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal } from "lucide-react";
-
-const mockWorkers = [
-  { id: "W001", name: "Rahul Sharma", ward: "Ward 42", status: "Active", progress: "85%" },
-  { id: "W002", name: "Priya Patel", ward: "Ward 15", status: "Offline", progress: "62%" },
-  { id: "W003", name: "Amit Kumar", ward: "Ward 08", status: "Active", progress: "91%" },
-  { id: "W004", name: "Sneha Reddy", ward: "Ward 22", status: "Inactive", progress: "10%" },
-  { id: "W005", name: "Vikram Singh", ward: "Ward 19", status: "Active", progress: "45%" },
-];
+import { createClient } from "@/lib/supabase/client";
 
 export function WorkerTable() {
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      setLoading(true);
+      const { data } = await supabase
+        .from('users')
+        .select('*, wards(name)');
+      if (data) setWorkers(data);
+      setLoading(false);
+    };
+    fetchWorkers();
+  }, [supabase]);
+
+  if (loading) return <div className="p-8 text-center animate-pulse text-slate-500">Loading workers...</div>;
+
+  if (workers.length === 0) return <div className="p-8 text-center text-slate-500">No enumerators registered yet.</div>;
+
   return (
     <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
       <Table>
@@ -33,17 +47,17 @@ export function WorkerTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockWorkers.map((worker) => (
+          {workers.map((worker) => (
             <TableRow key={worker.id} className="border-slate-200 dark:border-slate-800">
               <TableCell>
                 <div className="font-medium text-slate-900 dark:text-slate-100">{worker.name}</div>
-                <div className="text-xs text-slate-500 dark:text-slate-400">{worker.id}</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">{worker.email}</div>
               </TableCell>
-              <TableCell className="text-slate-600 dark:text-slate-300">{worker.ward}</TableCell>
+              <TableCell className="text-slate-600 dark:text-slate-300">{worker.wards?.name || 'Unassigned'}</TableCell>
               <TableCell>
-                <Badge variant={worker.status === 'Active' ? 'default' : worker.status === 'Offline' ? 'secondary' : 'destructive'} 
-                  className={worker.status === 'Active' ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400' : ''}>
-                  {worker.status}
+                <Badge variant={worker.role === 'enumerator' ? 'default' : 'secondary'} 
+                  className={worker.role === 'enumerator' ? 'bg-green-500/10 text-green-600 hover:bg-green-500/20 dark:bg-green-500/20 dark:text-green-400' : ''}>
+                  {worker.role}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
