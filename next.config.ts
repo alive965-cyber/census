@@ -8,18 +8,10 @@ const withPWA = require("next-pwa")({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  outputFileTracingRoot: __dirname,
   turbopack: {
     root: __dirname,
   },
-  
 };
 
 export default withPWA(nextConfig);
-
-// /** @type {import('next').NextConfig} */
-// const nextConfig = {
-//   turbopack: {},
-// }
-
-// module.exports = nextConfig
