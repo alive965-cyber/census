@@ -16,10 +16,11 @@ interface HouseCensusFormProps {
   onSuccess?: () => void
   latitude: number
   longitude: number
+  houseId?: string
 }
 
-export function HouseCensusForm({ initialValues, onSuccess, latitude, longitude }: HouseCensusFormProps) {
-  const { addHouse, loading, error } = useHouses()
+export function HouseCensusForm({ initialValues, onSuccess, latitude, longitude, houseId }: HouseCensusFormProps) {
+  const { addHouse, updateHouse, loading, error } = useHouses()
   
   const { register, handleSubmit, control, formState: { errors }, watch } = useForm<HouseCensusFormValues>({
     resolver: zodResolver(houseCensusSchema) as any,
@@ -37,7 +38,12 @@ export function HouseCensusForm({ initialValues, onSuccess, latitude, longitude 
   })
 
   const onSubmit = async (data: HouseCensusFormValues) => {
-    const res = await addHouse(data)
+    let res;
+    if (houseId) {
+      res = await updateHouse(houseId, data);
+    } else {
+      res = await addHouse(data);
+    }
     if (res && onSuccess) {
       onSuccess()
     }

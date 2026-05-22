@@ -12,8 +12,9 @@ export interface HouseData {
   address: string;
   head_of_family: string;
   ward_id: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  survey_status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
   created_at: string;
+  total_population: number;
 }
 
 export interface SurveyData {
@@ -96,13 +97,13 @@ export function generateWardSummaryReport(
 
   // ─── Summary ───
   const totalHouses = houses.length;
-  const totalSurveyed = houses.filter((h) => h.status === 'completed').length;
-  const totalPending = houses.filter((h) => h.status === 'pending').length;
-  const totalInProgress = houses.filter((h) => h.status === 'in_progress').length;
+  const totalSurveyed = houses.filter((h) => h.survey_status === 'COMPLETED').length;
+  const totalPending = houses.filter((h) => h.survey_status === 'PENDING').length;
+  const totalInProgress = houses.filter((h) => h.survey_status === 'IN_PROGRESS').length;
   const completionPercentage = totalHouses > 0 ? Math.round((totalSurveyed / totalHouses) * 100) : 0;
-  const totalPopulation = surveys.reduce((sum, s) => sum + (s.family_members_count || 0), 0);
+  const totalPopulation = houses.reduce((sum, h) => sum + (h.total_population || 0), 0);
   const averageFamilySize =
-    surveys.length > 0 ? Math.round((totalPopulation / surveys.length) * 10) / 10 : 0;
+    totalHouses > 0 ? Math.round((totalPopulation / totalHouses) * 10) / 10 : 0;
 
   const summary: ReportSummary = {
     totalHouses,
@@ -117,13 +118,10 @@ export function generateWardSummaryReport(
   // ─── Ward Breakdown ───
   const wardBreakdown: WardBreakdownItem[] = wards.map((ward) => {
     const wardHouses = houses.filter((h) => h.ward_id === ward.id);
-    const wardSurveys = wardHouses
-      .map((h) => surveyByHouse.get(h.id))
-      .filter(Boolean) as SurveyData[];
 
-    const surveyed = wardHouses.filter((h) => h.status === 'completed').length;
-    const pending = wardHouses.filter((h) => h.status === 'pending').length;
-    const inProgress = wardHouses.filter((h) => h.status === 'in_progress').length;
+    const surveyed = wardHouses.filter((h) => h.survey_status === 'COMPLETED').length;
+    const pending = wardHouses.filter((h) => h.survey_status === 'PENDING').length;
+    const inProgress = wardHouses.filter((h) => h.survey_status === 'IN_PROGRESS').length;
 
     return {
       wardId: ward.id,
@@ -134,7 +132,7 @@ export function generateWardSummaryReport(
       pending,
       inProgress,
       completionRate: wardHouses.length > 0 ? Math.round((surveyed / wardHouses.length) * 100) : 0,
-      totalPopulation: wardSurveys.reduce((sum, s) => sum + (s.family_members_count || 0), 0),
+      totalPopulation: wardHouses.reduce((sum, h) => sum + (h.total_population || 0), 0),
     };
   });
 

@@ -72,6 +72,7 @@ export default function HouseholdDetailsPage({ params }: { params: Promise<{ id:
           initialValues={initialValues} 
           latitude={initialValues.latitude || 0}
           longitude={initialValues.longitude || 0}
+          houseId={house.id}
           onSuccess={() => setIsEditing(false)}
         />
       </div>

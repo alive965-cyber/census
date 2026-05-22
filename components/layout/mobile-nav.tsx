@@ -40,7 +40,7 @@ export function MobileNav() {
                 
                 {/* Central Add Button */}
                 <div className="relative -top-5">
-                  <Link href="/add">
+                  <Link href="/households">
                     <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center border-4 border-background">
                       <PlusCircle size={28} />
                     </div>
